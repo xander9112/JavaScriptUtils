@@ -176,3 +176,189 @@ $$.secondsToTime = function (seconds) {
 		sec:     sec
 	};
 };
+
+
+/** 7 жизненно важных функций в JavaScript **/
+
+
+/*========================================================================== */
+/*
+ debounce
+
+ Функция debounce может сыграть важную роль когда дело касается
+ производительности событий. Если вы не используете debounce с событиями
+ scroll, resize, key*, скорее всего, вы делаете что-то не так.
+ Ниже приведен код функции debounce, которая поможет повысить
+ производительность вашего кода:
+ */
+/*========================================================================== */
+
+// Возвращает функцию, которая не будет срабатывать, пока продолжает вызываться.
+// Она сработает только один раз через N миллисекунд после последнего вызова.
+// Если ей передан аргумент `immediate`, то она будет вызвана один раз сразу после
+// первого запуска.
+
+/**
+ *
+ * @param func
+ * @param wait
+ * @param immediate
+ * @returns {Function}
+ */
+$$.debounce = function (func, wait, immediate) {
+	var timeout;
+	return function () {
+		var context = this, args = arguments;
+		var later = function () {
+			timeout = null;
+			if (!immediate) func.apply(context, args);
+		};
+		var callNow = immediate && !timeout;
+		clearTimeout(timeout);
+		timeout = setTimeout(later, wait);
+		if (callNow) func.apply(context, args);
+	};
+};
+
+/**
+ Использование
+ var myEfficientFn = debounce(function () {
+		//All the taxing stuff you do
+	}, 250);
+ window.addEventListener('resize', myEfficientFn);
+
+ debounce не позволит обратному вызову исполняться чаще,
+ чем один раз в заданный период времени. Это особенно важно
+ при назначении функции обратного вызова для часто вызываемых
+ событий.
+ **/
+
+/*========================================================================== */
+/*
+ poll
+
+ Функцию debounce не всегда возможно подключить для обозначения желаемого
+ состояния: если событие не существует — это будет не возможно.
+ В этом случае вы должны проверять состояние с помощью интервалов:
+ */
+/*========================================================================== */
+
+// Возвращает функцию, которая не будет срабатывать, пока продолжает вызываться.
+// Она сработает только один раз через N миллисекунд после последнего вызова.
+// Если ей передан аргумент `immediate`, то она будет вызвана один раз сразу после
+// первого запуска.
+
+
+/**
+ *
+ * @param fn
+ * @param timeout
+ * @param interval
+ * @returns {*|promise.promise|Function|jQuery.promise|d.promise|promise}
+ */
+$$.poll = function (fn, timeout, interval) {
+	var dfd = new Deferred();
+	var endTime = Number(new Date()) + (timeout || 2000);
+	interval = interval || 100;
+
+	(function p () {
+		// Если условие не выполнено, то мы закончили
+		if (fn()) {
+			dfd.resolve();
+		}
+		// Если условие выполнено, но таймаут ещё не наступл — повторяем
+		else if (Number(new Date()) < endTime) {
+			setTimeout(p, interval);
+		}
+		// Колбек, который будет вызван в случае успеха
+		else {
+			dfd.reject(new Error('timed out for ' + fn + ': ' + arguments));
+		}
+	})();
+
+	return dfd.promise;
+};
+
+/**
+ Использование
+ poll(function() {
+		return document.getElementById('lightbox').offsetWidth > 0;
+	}, 2000, 150);
+ **/
+
+/*========================================================================== */
+/*
+ once
+
+ Иногда бывает нужно, чтобы функция выполнилась только один раз,
+ как если бы вы использовали событие onload. Функция once даёт такую
+ возможность:
+ */
+/*========================================================================== */
+
+
+/**
+ *
+ * @param fn
+ * @param context
+ * @returns {Function}
+ */
+$$.once = function (fn, context) {
+	var result;
+
+	return function () {
+		if (fn) {
+			result = fn.apply(context || this, arguments);
+			fn = null;
+		}
+
+		return result;
+	};
+};
+
+/**
+ Использование
+ var canOnlyFireOnce = once(function() {
+		console.log('Запущено!');
+	});
+
+ canOnlyFireOnce(); // "Запущено!"
+ canOnlyFireOnce(); // Не запущено
+
+ once гарантирует, что заданная функция будет вызвана только один раз,
+ что предотвращает повторную инициализацию.
+ **/
+
+/*========================================================================== */
+/*
+ getAbsoluteUrl
+
+ Получить абсолютный URL из строчной переменной не так просто, как кажется.
+ Существует конструктор URL, но он «барахлит», если вы не предоставите
+ требуемые параметры (которых у вас может не быть).
+ Вот хитрый способ получить абсолютный URL из строки:
+
+ */
+/*========================================================================== */
+
+/**
+ *
+ */
+$$.getAbsoluteUrl = (function () {
+	var a;
+
+	return function (url) {
+		if (!a) a = document.createElement('a');
+		a.href = url;
+
+		return a.href;
+	};
+})();
+
+/**
+ Использование
+ getAbsoluteUrl('/something'); // http://davidwalsh.name/something
+
+ Передаваемый на вход href и URL не имеют значения,
+ функция в любом случае вернёт надежный абсолютный URL в ответ.
+ **/
